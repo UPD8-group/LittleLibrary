@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LittleLibrary — Map</title>
+<meta name="theme-color" content="#8B5E3C">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#FAF6EE;--warm-white:#FFFDF7;--wood:#8B5E3C;--dark-brown:#5C3A1E;
+  --leaf:#4A8B3F;--soft-green:#E8F0E4;--sky:#2C5F8A;--soft-blue:#E4EDF5;
+  --toy-orange:#D4882A;--soft-orange:#FDF0E0;--text:#3D2E1C;--text-light:#7A6B58;
+  --border:#E0D7C8;--card-bg:#FFFFFF;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',system-ui,sans-serif;color:var(--text);background:var(--cream)}
+
+/* MAP */
+#map{width:100%;height:100%;position:absolute;top:0;left:0}
+
+/* TOP BAR */
+.top-bar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(255,253,247,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding:0.5rem 0.75rem;
+  display:flex;align-items:center;gap:0.5rem;
+}
+.top-logo{
+  font-family:'Lora',Georgia,serif;font-weight:700;font-size:1.05rem;color:var(--dark-brown);
+  text-decoration:none;display:flex;align-items:center;gap:0.35rem;flex-shrink:0;
+}
+.top-logo span{font-size:1.2rem}
+.search-wrap{
+  flex:1;position:relative;max-width:360px;
+}
+.search-wrap input{
+  width:100%;padding:0.5rem 0.75rem 0.5rem 2.2rem;border-radius:10px;border:1px solid var(--border);
+  background:var(--card-bg);font-size:0.9rem;font-family:inherit;color:var(--text);
+  transition:border-color 0.2s;
+}
+.search-wrap input:focus{outline:none;border-color:var(--wood)}
+.search-wrap input::placeholder{color:var(--text-light)}
+.search-icon{position:absolute;left:0.65rem;top:50%;transform:translateY(-50%);color:var(--text-light);pointer-events:none}
+.btn-locate{
+  width:36px;height:36px;border-radius:10px;border:1px solid var(--border);
+  background:var(--card-bg);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text-light);transition:all 0.2s;flex-shrink:0;
+}
+.btn-locate:hover{border-color:var(--wood);color:var(--wood)}
+.btn-locate.active{background:var(--wood);color:white;border-color:var(--wood)}
+.btn-back{
+  width:36px;height:36px;border-radius:10px;border:1px solid var(--border);
+  background:var(--card-bg);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text);transition:all 0.2s;flex-shrink:0;text-decoration:none;
+}
+.btn-back:hover{border-color:var(--wood);color:var(--wood)}
+
+/* FILTER BAR */
+.filter-bar{
+  position:fixed;top:52px;left:0;right:0;z-index:99;
+  background:rgba(255,253,247,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  padding:0.4rem 0.75rem;display:flex;gap:0.4rem;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  border-bottom:1px solid var(--border);
+}
+.filter-bar::-webkit-scrollbar{display:none}
+.filter-btn{
+  display:flex;align-items:center;gap:0.3rem;padding:0.35rem 0.75rem;
+  border-radius:20px;border:1.5px solid var(--border);background:var(--card-bg);
+  font-size:0.8rem;font-family:inherit;font-weight:500;color:var(--text-light);
+  cursor:pointer;white-space:nowrap;transition:all 0.2s;flex-shrink:0;
+}
+.filter-btn.active{color:white;border-color:transparent}
+.filter-btn[data-cat="street_library"].active{background:var(--wood)}
+.filter-btn[data-cat="public_library"].active{background:var(--sky)}
+.filter-btn[data-cat="seed_library"].active{background:var(--leaf)}
+.filter-btn[data-cat="toy_library"].active{background:var(--toy-orange)}
+.filter-btn .count{font-size:0.72rem;opacity:0.7}
+
+/* SEARCH RESULTS */
+.search-results{
+  position:fixed;top:52px;left:0;right:0;z-index:101;
+  max-height:60vh;overflow-y:auto;background:var(--card-bg);
+  border-bottom:1px solid var(--border);display:none;
+  box-shadow:0 8px 30px rgba(0,0,0,0.1);
+}
+.search-results.open{display:block}
+.search-result{
+  padding:0.75rem 1rem;border-bottom:1px solid var(--border);cursor:pointer;
+  display:flex;align-items:center;gap:0.6rem;transition:background 0.15s;
+}
+.search-result:hover{background:var(--cream)}
+.search-result-emoji{font-size:1.3rem;flex-shrink:0}
+.search-result-info{flex:1;min-width:0}
+.search-result-name{font-weight:500;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search-result-sub{font-size:0.78rem;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search-empty{padding:1.5rem;text-align:center;color:var(--text-light);font-size:0.9rem}
+
+/* INFOWINDOW OVERRIDES */
+.gm-style-iw{border-radius:16px!important;padding:0!important;max-width:320px!important}
+.gm-style-iw-d{overflow:auto!important;padding:0!important;max-height:400px!important}
+.gm-style-iw-tc{display:none!important}
+.gm-ui-hover-effect{top:4px!important;right:4px!important}
+
+/* INFO CARD */
+.info-card{padding:1rem 1.1rem 0.8rem;min-width:260px;max-width:310px}
+.info-card-head{display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:0.6rem}
+.info-card-emoji{font-size:2rem;line-height:1;flex-shrink:0}
+.info-card-title{font-family:'Lora',serif;font-size:1.05rem;font-weight:600;color:var(--dark-brown);line-height:1.25}
+.info-card-cat{
+  display:inline-block;font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;
+  border-radius:12px;margin-top:0.2rem;
+}
+.info-card-cat.street_library{background:#F5EDE4;color:var(--wood)}
+.info-card-cat.public_library{background:var(--soft-blue);color:var(--sky)}
+.info-card-cat.seed_library{background:var(--soft-green);color:var(--leaf)}
+.info-card-cat.toy_library{background:var(--soft-orange);color:var(--toy-orange)}
+.info-card-details{margin:0.5rem 0}
+.info-detail{display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.4rem;font-size:0.85rem}
+.info-detail-icon{flex-shrink:0;width:16px;text-align:center;color:var(--text-light);margin-top:2px}
+.info-detail-text{color:var(--text);line-height:1.4;word-break:break-word}
+.info-detail-text a{color:var(--sky);text-decoration:none}
+.info-detail-text a:hover{text-decoration:underline}
+.info-open-badge{
+  display:inline-block;font-size:0.72rem;font-weight:600;padding:0.15rem 0.45rem;
+  border-radius:8px;margin-left:0.3rem;
+}
+.info-open-badge.open{background:#dcfce7;color:#166534}
+.info-open-badge.closed{background:#fef2f2;color:#991b1b}
+.info-actions{display:flex;gap:0.5rem;margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid var(--border)}
+.info-action-btn{
+  flex:1;padding:0.5rem;border-radius:10px;border:1px solid var(--border);
+  background:var(--card-bg);font-size:0.78rem;font-family:inherit;font-weight:500;
+  color:var(--text);cursor:pointer;text-align:center;transition:all 0.2s;
+  display:flex;align-items:center;justify-content:center;gap:0.3rem;
+}
+.info-action-btn:hover{border-color:var(--wood);color:var(--wood)}
+.info-action-btn.primary{background:var(--wood);color:white;border-color:var(--wood)}
+.info-action-btn.primary:hover{background:var(--dark-brown)}
+
+/* REPORT MODAL */
+.modal-overlay{
+  position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.4);
+  display:none;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--card-bg);border-radius:20px 20px 0 0;width:100%;max-width:480px;
+  max-height:80vh;overflow-y:auto;padding:1.5rem;
+  animation:slideUp 0.3s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal h3{font-family:'Lora',serif;font-size:1.2rem;color:var(--dark-brown);margin-bottom:0.3rem}
+.modal-sub{font-size:0.85rem;color:var(--text-light);margin-bottom:1rem}
+.report-options{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem}
+.report-opt{
+  padding:0.5rem 0.8rem;border-radius:12px;border:1.5px solid var(--border);
+  background:var(--card-bg);font-size:0.85rem;cursor:pointer;transition:all 0.2s;
+  display:flex;align-items:center;gap:0.3rem;
+}
+.report-opt.selected{border-color:var(--wood);background:rgba(139,94,60,0.08)}
+.report-note{
+  width:100%;padding:0.6rem;border-radius:10px;border:1px solid var(--border);
+  font-family:inherit;font-size:0.9rem;resize:vertical;min-height:60px;
+  margin-bottom:1rem;
+}
+.report-note:focus{outline:none;border-color:var(--wood)}
+.modal-actions{display:flex;gap:0.5rem}
+.modal-actions button{
+  flex:1;padding:0.65rem;border-radius:12px;font-family:inherit;font-size:0.9rem;
+  font-weight:600;cursor:pointer;border:none;transition:all 0.2s;
+}
+.btn-cancel{background:var(--cream);color:var(--text)}
+.btn-cancel:hover{background:var(--border)}
+.btn-submit{background:var(--wood);color:white}
+.btn-submit:hover{background:var(--dark-brown)}
+.report-success{text-align:center;padding:1.5rem 0}
+.report-success-emoji{font-size:2.5rem;margin-bottom:0.5rem}
+.report-success p{color:var(--text-light);font-size:0.9rem}
+
+/* NAV PANEL */
+.nav-panel{
+  position:fixed;bottom:0;left:0;right:0;z-index:150;
+  background:var(--card-bg);border-radius:20px 20px 0 0;
+  padding:1rem 1.25rem;box-shadow:0 -4px 20px rgba(0,0,0,0.1);
+  display:none;animation:slideUp 0.3s ease;
+}
+.nav-panel.open{display:block}
+.nav-panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem}
+.nav-dest{font-family:'Lora',serif;font-weight:600;color:var(--dark-brown);font-size:1rem}
+.nav-close{
+  width:28px;height:28px;border-radius:50%;border:none;background:var(--cream);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text-light);font-size:0.9rem;
+}
+.nav-info{display:flex;gap:1.5rem;margin-bottom:0.6rem}
+.nav-info-item{font-size:0.85rem;color:var(--text-light)}
+.nav-info-item strong{color:var(--text);font-weight:600}
+.nav-mode-btns{display:flex;gap:0.4rem}
+.nav-mode-btn{
+  padding:0.4rem 0.8rem;border-radius:10px;border:1px solid var(--border);
+  background:var(--card-bg);font-size:0.8rem;font-family:inherit;cursor:pointer;
+  transition:all 0.2s;display:flex;align-items:center;gap:0.3rem;
+}
+.nav-mode-btn.active{background:var(--wood);color:white;border-color:var(--wood)}
+
+/* LOADING */
+.loading{
+  position:fixed;inset:0;z-index:300;background:var(--cream);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity 0.4s;
+}
+.loading.hide{opacity:0;pointer-events:none}
+.loading-emoji{font-size:3rem;animation:float 2s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.loading-text{font-family:'Lora',serif;font-size:1.1rem;color:var(--wood);margin-top:0.8rem}
+.loading-sub{font-size:0.85rem;color:var(--text-light);margin-top:0.3rem}
+.loading-bar{width:200px;height:3px;background:var(--border);border-radius:3px;margin-top:1rem;overflow:hidden}
+.loading-bar-fill{height:100%;background:var(--wood);border-radius:3px;width:0;transition:width 0.3s}
+
+/* COUNTER BADGE */
+.count-badge{
+  position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:98;
+  background:rgba(255,253,247,0.92);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:30px;
+  padding:0.4rem 1rem;font-size:0.8rem;color:var(--text-light);
+  box-shadow:0 2px 12px rgba(0,0,0,0.08);
+  display:flex;align-items:center;gap:0.4rem;
+}
+.count-badge strong{color:var(--dark-brown);font-weight:600}
+
+@media(min-width:600px){
+  .modal{border-radius:20px;margin-bottom:2rem}
+  .nav-panel{left:50%;right:auto;transform:translateX(-50%);width:400px;border-radius:20px;bottom:1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading" id="loading">
+  <div class="loading-emoji">📚</div>
+  <div class="loading-text">Finding your community libraries...</div>
+  <div class="loading-sub">2,613 locations across Australia</div>
+  <div class="loading-bar"><div class="loading-bar-fill" id="loadingBar"></div></div>
+</div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <a href="index.html" class="btn-back" title="Home">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+  </a>
+  <a href="index.html" class="top-logo"><span>📚</span> LittleLibrary</a>
+  <div class="search-wrap">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="Search libraries..." autocomplete="off">
+  </div>
+  <button class="btn-locate" id="btnLocate" title="My location">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+  </button>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar" id="filterBar"></div>
+
+<!-- SEARCH RESULTS -->
+<div class="search-results" id="searchResults"></div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- COUNT BADGE -->
+<div class="count-badge" id="countBadge">
+  <strong id="visibleCount">0</strong> locations visible
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <div id="reportContent">
+      <h3>📋 Report an update</h3>
+      <p class="modal-sub">Help keep the map accurate for everyone.</p>
+      <input type="hidden" id="reportId">
+      <input type="hidden" id="reportName">
+      <div class="report-options" id="reportOptions">
+        <div class="report-opt" data-val="✅ Still here &amp; great">✅ Looks great</div>
+        <div class="report-opt" data-val="🔧 Needs repair">🔧 Needs repair</div>
+        <div class="report-opt" data-val="📚 Well stocked">📚 Well stocked</div>
+        <div class="report-opt" data-val="📭 Empty / bare">📭 Empty</div>
+        <div class="report-opt" data-val="❌ Gone / removed">❌ Gone</div>
+        <div class="report-opt" data-val="📍 Wrong location">📍 Wrong spot</div>
+        <div class="report-opt" data-val="🆕 Not on map yet">🆕 Not listed</div>
+      </div>
+      <textarea class="report-note" id="reportNote" placeholder="Any extra details? (optional)"></textarea>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeReport()">Cancel</button>
+        <button class="btn-submit" id="btnSubmitReport">Send report</button>
+      </div>
+    </div>
+    <div id="reportSuccess" style="display:none">
+      <div class="report-success">
+        <div class="report-success-emoji">🙏</div>
+        <h3 style="font-family:'Lora',serif;color:var(--dark-brown)">Thank you!</h3>
+        <p>Your report helps keep the map accurate for everyone.</p>
+        <button class="btn-cancel" style="margin-top:1rem;padding:0.5rem 1.5rem;border-radius:10px;border:1px solid var(--border);cursor:pointer" onclick="closeReport()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV PANEL -->
+<div class="nav-panel" id="navPanel">
+  <div class="nav-panel-head">
+    <div class="nav-dest" id="navDest">Navigating...</div>
+    <button class="nav-close" onclick="closeNav()" title="Close">✕</button>
+  </div>
+  <div class="nav-info" id="navInfo"></div>
+  <div class="nav-mode-btns" id="navModes"></div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG (inline from config.js for single-file operation)
+// ============================================================
+const CATS = {
+  street_library: { emoji: '📚', label: 'Street Libraries', color: '#8B5E3C' },
+  public_library: { emoji: '🏛️', label: 'Public Libraries', color: '#2C5F8A' },
+  seed_library:   { emoji: '🌱', label: 'Seed Libraries', color: '#4A8B3F' },
+  toy_library:    { emoji: '🧸', label: 'Toy Libraries', color: '#D4882A' },
+};
+const CAT_LABELS = {
+  street_library: 'Street Library',
+  public_library: 'Public Library',
+  seed_library: 'Seed Library / Garden',
+  toy_library: 'Toy Library',
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let map, infoWindow, userMarker, directionsService, directionsRenderer;
+let allData = [];
+let markers = [];
+let markerCache = new Map();
+let activeFilters = new Set(Object.keys(CATS));
+let userPos = null;
+
+// ============================================================
+// INIT
+// ============================================================
+function initMap() {
+  const loadBar = document.getElementById('loadingBar');
+  loadBar.style.width = '20%';
+
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: -25.2744, lng: 133.7751 },
+    zoom: 5,
+    disableDefaultUI: true,
+    zoomControl: true,
+    zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
+    styles: [
+      { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+      { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+      { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9dde4' }] },
+      { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f5f0e8' }] },
+      { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#e8e2d6' }] },
+      { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#8a7e6b' }] },
+    ],
+    gestureHandling: 'greedy',
+    clickableIcons: false,
+  });
+
+  infoWindow = new google.maps.InfoWindow();
+  directionsService = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer({
+    suppressMarkers: true,
+    polylineOptions: { strokeColor: '#8B5E3C', strokeWeight: 4, strokeOpacity: 0.8 },
+  });
+  directionsRenderer.setMap(map);
+
+  loadBar.style.width = '40%';
+  buildFilters();
+  loadData(loadBar);
+}
+
+// ============================================================
+// DATA
+// ============================================================
+async function loadData(loadBar) {
+  try {
+    const resp = await fetch('littlelibrary-au.json');
+    allData = await resp.json();
+    loadBar.style.width = '70%';
+    renderMarkers();
+    loadBar.style.width = '100%';
+    setTimeout(() => document.getElementById('loading').classList.add('hide'), 400);
+    // Try geolocation
+    geolocate(false);
+  } catch (e) {
+    console.error('Failed to load data:', e);
+    document.querySelector('.loading-text').textContent = 'Failed to load data';
+  }
+}
+
+// ============================================================
+// MARKERS — Canvas-based emoji markers with retina support
+// ============================================================
+function createEmojiIcon(emoji, cat) {
+  const key = `${emoji}-${cat}`;
+  if (markerCache.has(key)) return markerCache.get(key);
+
+  const dpr = window.devicePixelRatio || 1;
+  const size = 36;
+  const canvas = document.createElement('canvas');
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Circle background
+  const col = CATS[cat]?.color || '#8B5E3C';
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFFDF7';
+  ctx.fill();
+  ctx.strokeStyle = col;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Emoji
+  ctx.font = `${size * 0.5}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, size / 2, size / 2 + 1);
+
+  const icon = {
+    url: canvas.toDataURL(),
+    scaledSize: new google.maps.Size(size, size),
+    anchor: new google.maps.Point(size / 2, size / 2),
+  };
+  markerCache.set(key, icon);
+  return icon;
+}
+
+function renderMarkers() {
+  // Clear
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+
+  const bounds = map.getBounds();
+  const zoom = map.getZoom();
+  let count = 0;
+
+  allData.forEach(d => {
+    if (!activeFilters.has(d.category)) return;
+    const cat = CATS[d.category];
+    if (!cat) return;
+
+    const marker = new google.maps.Marker({
+      position: { lat: d.lat, lng: d.lon },
+      map: map,
+      icon: createEmojiIcon(cat.emoji, d.category),
+      title: d.name || cat.label,
+      optimized: true,
+    });
+
+    marker._data = d;
+    marker.addListener('click', () => openInfoWindow(marker, d));
+    markers.push(marker);
+    count++;
+  });
+
+  document.getElementById('visibleCount').textContent = count.toLocaleString();
+}
+
+// Debounced re-render on filter change
+function updateMarkers() {
+  markers.forEach(m => {
+    const show = activeFilters.has(m._data.category);
+    m.setVisible(show);
+  });
+  const count = markers.filter(m => m.getVisible()).length;
+  document.getElementById('visibleCount').textContent = count.toLocaleString();
+}
+
+// ============================================================
+// INFOWINDOW
+// ============================================================
+function openInfoWindow(marker, d) {
+  const cat = CATS[d.category];
+  let details = '';
+
+  // Address
+  const addrParts = [d.addr, d.suburb, d.postcode].filter(Boolean);
+  if (addrParts.length) {
+    details += `<div class="info-detail"><div class="info-detail-icon">📍</div><div class="info-detail-text">${addrParts.join(', ')}</div></div>`;
+  }
+
+  // Opening hours
+  if (d.opening_hours) {
+    const isOpen = checkOpenNow(d.opening_hours);
+    const badge = isOpen !== null
+      ? `<span class="info-open-badge ${isOpen ? 'open' : 'closed'}">${isOpen ? 'Open now' : 'Closed'}</span>`
+      : '';
+    details += `<div class="info-detail"><div class="info-detail-icon">🕐</div><div class="info-detail-text">${formatHours(d.opening_hours)}${badge}</div></div>`;
+  }
+
+  // Description
+  if (d.description) {
+    details += `<div class="info-detail"><div class="info-detail-icon">📝</div><div class="info-detail-text">${escHtml(d.description)}</div></div>`;
+  }
+
+  // Phone
+  if (d.phone) {
+    details += `<div class="info-detail"><div class="info-detail-icon">📞</div><div class="info-detail-text"><a href="tel:${d.phone}">${d.phone}</a></div></div>`;
+  }
+
+  // Website
+  if (d.website) {
+    const url = d.website.startsWith('http') ? d.website : `https://${d.website}`;
+    const domain = url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+    details += `<div class="info-detail"><div class="info-detail-icon">🌐</div><div class="info-detail-text"><a href="${url}" target="_blank" rel="noopener">${domain}</a></div></div>`;
+  }
+
+  // Operator
+  if (d.operator) {
+    details += `<div class="info-detail"><div class="info-detail-icon">🏠</div><div class="info-detail-text">${escHtml(d.operator)}</div></div>`;
+  }
+
+  // Wheelchair
+  if (d.wheelchair === 'yes') {
+    details += `<div class="info-detail"><div class="info-detail-icon">♿</div><div class="info-detail-text">Wheelchair accessible</div></div>`;
+  }
+
+  // Distance from user
+  let distText = '';
+  if (userPos) {
+    const dist = haversine(userPos.lat, userPos.lng, d.lat, d.lon);
+    distText = dist < 1 ? `${Math.round(dist * 1000)}m away` : `${dist.toFixed(1)}km away`;
+    details += `<div class="info-detail"><div class="info-detail-icon">📏</div><div class="info-detail-text">${distText}</div></div>`;
+  }
+
+  const html = `
+    <div class="info-card">
+      <div class="info-card-head">
+        <div class="info-card-emoji">${cat.emoji}</div>
+        <div>
+          <div class="info-card-title">${escHtml(d.name || cat.label)}</div>
+          <span class="info-card-cat ${d.category}">${CAT_LABELS[d.category]}</span>
+        </div>
+      </div>
+      ${details ? `<div class="info-card-details">${details}</div>` : ''}
+      <div class="info-actions">
+        <button class="info-action-btn primary" onclick="startNav('${d.id}')">🧭 Navigate</button>
+        <button class="info-action-btn" onclick="openReport('${d.id}','${escAttr(d.name || cat.label)}')">📋 Report</button>
+      </div>
+    </div>
+  `;
+
+  infoWindow.setContent(html);
+  infoWindow.open(map, marker);
+}
+
+// ============================================================
+// FILTERS
+// ============================================================
+function buildFilters() {
+  const bar = document.getElementById('filterBar');
+  const counts = {};
+  // We'll update counts after data loads, for now show categories
+  Object.entries(CATS).forEach(([key, cat]) => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn active';
+    btn.dataset.cat = key;
+    btn.innerHTML = `${cat.emoji} ${cat.label} <span class="count" id="count-${key}"></span>`;
+    btn.addEventListener('click', () => toggleFilter(key, btn));
+    bar.appendChild(btn);
+  });
+}
+
+function updateFilterCounts() {
+  Object.keys(CATS).forEach(key => {
+    const count = allData.filter(d => d.category === key).length;
+    const el = document.getElementById(`count-${key}`);
+    if (el) el.textContent = count.toLocaleString();
+  });
+}
+
+// Call after data loads
+const origRender = renderMarkers;
+renderMarkers = function() {
+  origRender();
+  updateFilterCounts();
+};
+
+function toggleFilter(cat, btn) {
+  if (activeFilters.has(cat)) {
+    activeFilters.delete(cat);
+    btn.classList.remove('active');
+  } else {
+    activeFilters.add(cat);
+    btn.classList.add('active');
+  }
+  updateMarkers();
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+let searchTimeout;
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(doSearch, 200);
+});
+
+searchInput.addEventListener('focus', () => {
+  if (searchInput.value.trim().length >= 2) doSearch();
+});
+
+document.addEventListener('click', (e) => {
+  if (!searchResults.contains(e.target) && e.target !== searchInput) {
+    searchResults.classList.remove('open');
+  }
+});
+
+function doSearch() {
+  const q = searchInput.value.trim().toLowerCase();
+  if (q.length < 2) { searchResults.classList.remove('open'); return; }
+
+  const results = allData
+    .filter(d => {
+      const hay = `${d.name || ''} ${d.suburb || ''} ${d.postcode || ''} ${d.addr || ''} ${d.operator || ''} ${d.description || ''}`.toLowerCase();
+      return hay.includes(q);
+    })
+    .slice(0, 20);
+
+  // Sort by distance if user location known
+  if (userPos) {
+    results.sort((a, b) => haversine(userPos.lat, userPos.lng, a.lat, a.lon) - haversine(userPos.lat, userPos.lng, b.lat, b.lon));
+  }
+
+  if (results.length === 0) {
+    searchResults.innerHTML = '<div class="search-empty">No results found</div>';
+  } else {
+    searchResults.innerHTML = results.map(d => {
+      const cat = CATS[d.category];
+      let sub = [d.suburb, d.postcode].filter(Boolean).join(' ');
+      if (userPos) {
+        const dist = haversine(userPos.lat, userPos.lng, d.lat, d.lon);
+        sub += sub ? ' · ' : '';
+        sub += dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`;
+      }
+      return `
+        <div class="search-result" onclick="goToResult('${d.id}')">
+          <span class="search-result-emoji">${cat.emoji}</span>
+          <div class="search-result-info">
+            <div class="search-result-name">${escHtml(d.name || cat.label)}</div>
+            <div class="search-result-sub">${CAT_LABELS[d.category]}${sub ? ' · ' + sub : ''}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  searchResults.classList.add('open');
+}
+
+function goToResult(id) {
+  searchResults.classList.remove('open');
+  searchInput.blur();
+  const d = allData.find(x => x.id === id);
+  if (!d) return;
+  map.panTo({ lat: d.lat, lng: d.lon });
+  map.setZoom(17);
+  // Find marker and open info
+  setTimeout(() => {
+    const m = markers.find(m => m._data.id === id);
+    if (m) {
+      openInfoWindow(m, d);
+    }
+  }, 300);
+}
+
+// ============================================================
+// GEOLOCATION
+// ============================================================
+const btnLocate = document.getElementById('btnLocate');
+btnLocate.addEventListener('click', () => geolocate(true));
+
+function geolocate(center) {
+  if (!navigator.geolocation) return;
+  btnLocate.classList.add('active');
+  navigator.geolocation.getCurrentPosition(pos => {
+    userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    if (userMarker) userMarker.setMap(null);
+    userMarker = new google.maps.Marker({
+      position: userPos,
+      map: map,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: '#4285F4',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 3,
+        scale: 8,
+      },
+      zIndex: 999,
+      title: 'You are here',
+    });
+    if (center) {
+      map.panTo(userPos);
+      map.setZoom(14);
+    }
+    setTimeout(() => btnLocate.classList.remove('active'), 600);
+  }, () => {
+    btnLocate.classList.remove('active');
+  }, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+let currentNavId = null;
+let currentNavMode = 'DRIVING';
+
+function startNav(id) {
+  if (!userPos) {
+    geolocate(false);
+    setTimeout(() => startNav(id), 1500);
+    return;
+  }
+  const d = allData.find(x => x.id === id);
+  if (!d) return;
+  currentNavId = id;
+  infoWindow.close();
+  showDirections(d, currentNavMode);
+}
+
+function showDirections(d, mode) {
+  currentNavMode = mode;
+  directionsService.route({
+    origin: userPos,
+    destination: { lat: d.lat, lng: d.lon },
+    travelMode: google.maps.TravelMode[mode],
+  }, (result, status) => {
+    if (status === 'OK') {
+      directionsRenderer.setDirections(result);
+      const leg = result.routes[0].legs[0];
+      document.getElementById('navDest').textContent = d.name || CAT_LABELS[d.category];
+      document.getElementById('navInfo').innerHTML = `
+        <div class="nav-info-item"><strong>${leg.duration.text}</strong></div>
+        <div class="nav-info-item"><strong>${leg.distance.text}</strong></div>
+      `;
+      document.getElementById('navModes').innerHTML = ['DRIVING','WALKING','BICYCLING','TRANSIT'].map(m => {
+        const icons = { DRIVING: '🚗', WALKING: '🚶', BICYCLING: '🚴', TRANSIT: '🚌' };
+        return `<button class="nav-mode-btn ${m === mode ? 'active' : ''}" onclick="showDirections(allData.find(x=>x.id==='${d.id}'),'${m}')">${icons[m]} ${m.charAt(0) + m.slice(1).toLowerCase()}</button>`;
+      }).join('');
+      document.getElementById('navPanel').classList.add('open');
+    }
+  });
+}
+
+function closeNav() {
+  document.getElementById('navPanel').classList.remove('open');
+  directionsRenderer.setDirections({ routes: [] });
+  currentNavId = null;
+}
+
+// ============================================================
+// REPORTING
+// ============================================================
+let selectedReportOptions = [];
+
+function openReport(id, name) {
+  document.getElementById('reportId').value = id;
+  document.getElementById('reportName').value = name;
+  document.getElementById('reportContent').style.display = '';
+  document.getElementById('reportSuccess').style.display = 'none';
+  document.getElementById('reportNote').value = '';
+  selectedReportOptions = [];
+  document.querySelectorAll('.report-opt').forEach(o => o.classList.remove('selected'));
+  document.getElementById('reportModal').classList.add('open');
+  infoWindow.close();
+}
+
+document.querySelectorAll('.report-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    opt.classList.toggle('selected');
+    const val = opt.dataset.val;
+    if (selectedReportOptions.includes(val)) {
+      selectedReportOptions = selectedReportOptions.filter(v => v !== val);
+    } else {
+      selectedReportOptions.push(val);
+    }
+  });
+});
+
+document.getElementById('btnSubmitReport').addEventListener('click', submitReport);
+
+async function submitReport() {
+  const id = document.getElementById('reportId').value;
+  const name = document.getElementById('reportName').value;
+  const note = document.getElementById('reportNote').value;
+  const status = selectedReportOptions.join(', ');
+
+  if (!status && !note) return;
+
+  const body = new URLSearchParams({
+    'form-name': 'littlelibrary-report',
+    'location-id': id,
+    'location-name': name,
+    'status': status,
+    'note': note,
+    'timestamp': new Date().toISOString(),
+  });
+
+  try {
+    await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+  } catch (e) { /* offline OK */ }
+
+  document.getElementById('reportContent').style.display = 'none';
+  document.getElementById('reportSuccess').style.display = '';
+}
+
+function closeReport() {
+  document.getElementById('reportModal').classList.remove('open');
+}
+
+// Close modal on overlay click
+document.getElementById('reportModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('reportModal')) closeReport();
+});
+
+// ============================================================
+// HELPERS
+// ============================================================
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function escAttr(s) {
+  return s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function formatHours(h) {
+  if (!h) return '';
+  return h.replace(/;/g, '<br>').replace(/Mo/g, 'Mon').replace(/Tu/g, 'Tue').replace(/We/g, 'Wed').replace(/Th/g, 'Thu').replace(/Fr/g, 'Fri').replace(/Sa/g, 'Sat').replace(/Su/g, 'Sun');
+}
+
+function checkOpenNow(hours) {
+  // Simple check — returns null if can't determine
+  if (!hours || hours === '24/7') return hours === '24/7' ? true : null;
+  // For complex OSM opening_hours, return null (would need a parser)
+  return null;
+}
+</script>
+
+<!-- Netlify Forms hidden form for report submissions -->
+<form name="littlelibrary-report" netlify netlify-honeypot="bot-field" hidden>
+  <input name="bot-field">
+  <input name="location-id">
+  <input name="location-name">
+  <input name="status">
+  <input name="note">
+  <input name="timestamp">
+</form>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyByuYcj_qjTbjC2sRWx8VmlMLMxELQ3fB8&callback=initMap"></script>
+</body>
+</html>

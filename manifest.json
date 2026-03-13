@@ -1,0 +1,17 @@
+{
+  "name": "LittleLibrary",
+  "short_name": "LittleLibrary",
+  "description": "Find street libraries, toy libraries, seed libraries and public libraries near you.",
+  "start_url": "/app.html",
+  "display": "standalone",
+  "background_color": "#FAF6EE",
+  "theme_color": "#8B5E3C",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

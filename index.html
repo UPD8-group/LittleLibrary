@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LittleLibrary — Take one. Leave one.</title>
+<meta name="description" content="Find street libraries, toy libraries, seed libraries and public libraries near you. Books, seeds, toys — free, near you. Australia's community sharing map.">
+<meta name="theme-color" content="#8B5E3C">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+<meta property="og:title" content="LittleLibrary — Take one. Leave one.">
+<meta property="og:description" content="Books, seeds, toys — free, near you. Australia's community sharing map.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://littlelibrary.app">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#FAF6EE;--warm-white:#FFFDF7;--wood:#8B5E3C;--dark-brown:#5C3A1E;
+  --leaf:#4A8B3F;--soft-green:#E8F0E4;--sky:#2C5F8A;--soft-blue:#E4EDF5;
+  --toy-orange:#D4882A;--soft-orange:#FDF0E0;--text:#3D2E1C;--text-light:#7A6B58;
+  --border:#E0D7C8;--card-bg:#FFFFFF;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',system-ui,sans-serif;color:var(--text);background:var(--cream);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:'Lora',Georgia,serif;font-weight:600;line-height:1.25}
+
+/* HERO */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:2rem 1.5rem;position:relative;overflow:hidden;
+  background:linear-gradient(170deg,var(--warm-white) 0%,var(--cream) 40%,var(--soft-green) 100%);
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 600px 400px at 15% 20%, rgba(139,94,60,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at 85% 70%, rgba(74,139,63,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 50% 90%, rgba(212,136,42,0.05) 0%, transparent 70%);
+  pointer-events:none;
+}
+.hero-emoji{font-size:4rem;margin-bottom:1rem;animation:float 3s ease-in-out infinite;position:relative}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.hero h1{font-size:clamp(2.5rem,6vw,4.5rem);color:var(--dark-brown);margin-bottom:0.3rem;position:relative}
+.hero h1 span{color:var(--wood)}
+.hero-tagline{font-family:'Lora',Georgia,serif;font-style:italic;font-size:clamp(1.1rem,2.5vw,1.6rem);color:var(--wood);margin-bottom:0.5rem;position:relative}
+.hero-sub{font-size:clamp(1rem,2vw,1.2rem);color:var(--text-light);max-width:32rem;margin:0 auto 2rem;position:relative}
+.hero-cta{
+  display:inline-flex;align-items:center;gap:0.6rem;
+  background:var(--wood);color:var(--warm-white);
+  padding:1rem 2.5rem;border-radius:60px;font-size:1.1rem;font-weight:600;
+  text-decoration:none;transition:all 0.3s ease;position:relative;
+  box-shadow:0 4px 20px rgba(139,94,60,0.3);
+}
+.hero-cta:hover{background:var(--dark-brown);transform:translateY(-2px);box-shadow:0 6px 28px rgba(139,94,60,0.4)}
+.hero-cta svg{width:20px;height:20px;transition:transform 0.3s}
+.hero-cta:hover svg{transform:translateX(3px)}
+.hero-stats{
+  display:flex;gap:2rem;margin-top:2.5rem;position:relative;flex-wrap:wrap;justify-content:center;
+}
+.hero-stat{text-align:center}
+.hero-stat-num{font-family:'Lora',serif;font-size:1.8rem;font-weight:700;color:var(--dark-brown)}
+.hero-stat-label{font-size:0.85rem;color:var(--text-light)}
+
+/* CATEGORIES */
+.categories{padding:5rem 1.5rem;background:var(--warm-white)}
+.categories-inner{max-width:64rem;margin:0 auto}
+.section-head{text-align:center;margin-bottom:3rem}
+.section-head h2{font-size:clamp(1.8rem,4vw,2.5rem);color:var(--dark-brown);margin-bottom:0.5rem}
+.section-head p{font-size:1.05rem;color:var(--text-light);max-width:36rem;margin:0 auto}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem}
+.cat-card{
+  background:var(--card-bg);border-radius:16px;padding:2rem;
+  border:1px solid var(--border);transition:all 0.3s ease;cursor:default;
+  position:relative;overflow:hidden;
+}
+.cat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  border-radius:16px 16px 0 0;transition:height 0.3s ease;
+}
+.cat-card:nth-child(1)::before{background:var(--wood)}
+.cat-card:nth-child(2)::before{background:var(--sky)}
+.cat-card:nth-child(3)::before{background:var(--leaf)}
+.cat-card:nth-child(4)::before{background:var(--toy-orange)}
+.cat-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.08)}
+.cat-card:hover::before{height:6px}
+.cat-emoji{font-size:2.5rem;margin-bottom:0.8rem;display:block}
+.cat-card h3{font-size:1.25rem;color:var(--dark-brown);margin-bottom:0.4rem}
+.cat-card p{color:var(--text-light);font-size:0.95rem;line-height:1.5}
+.cat-count{
+  display:inline-block;margin-top:0.8rem;font-size:0.8rem;font-weight:600;
+  padding:0.25rem 0.75rem;border-radius:20px;
+}
+.cat-card:nth-child(1) .cat-count{background:#F5EDE4;color:var(--wood)}
+.cat-card:nth-child(2) .cat-count{background:var(--soft-blue);color:var(--sky)}
+.cat-card:nth-child(3) .cat-count{background:var(--soft-green);color:var(--leaf)}
+.cat-card:nth-child(4) .cat-count{background:var(--soft-orange);color:var(--toy-orange)}
+
+/* WHY */
+.why{padding:5rem 1.5rem;background:var(--cream)}
+.why-inner{max-width:50rem;margin:0 auto}
+.why-grid{display:grid;gap:2rem;margin-top:2rem}
+.why-item{display:flex;gap:1rem;align-items:flex-start}
+.why-icon{
+  flex-shrink:0;width:48px;height:48px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:1.5rem;
+}
+.why-item:nth-child(1) .why-icon{background:#F5EDE4}
+.why-item:nth-child(2) .why-icon{background:var(--soft-green)}
+.why-item:nth-child(3) .why-icon{background:var(--soft-orange)}
+.why-item:nth-child(4) .why-icon{background:var(--soft-blue)}
+.why-item h3{font-size:1.1rem;color:var(--dark-brown);margin-bottom:0.2rem}
+.why-item p{color:var(--text-light);font-size:0.95rem}
+
+/* FAMILY */
+.family{padding:5rem 1.5rem;background:var(--warm-white)}
+.family-inner{max-width:50rem;margin:0 auto;text-align:center}
+.family-apps{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:0.8rem;margin-top:2rem;
+}
+.family-chip{
+  display:inline-flex;align-items:center;gap:0.4rem;
+  padding:0.5rem 1rem;border-radius:30px;font-size:0.85rem;
+  background:var(--card-bg);border:1px solid var(--border);color:var(--text-light);
+  text-decoration:none;transition:all 0.2s;
+}
+.family-chip:hover{border-color:var(--wood);color:var(--dark-brown);background:#FBF7F0}
+.family-chip.active{background:var(--wood);color:var(--warm-white);border-color:var(--wood);font-weight:600}
+
+/* FOOTER */
+footer{
+  padding:2.5rem 1.5rem;background:var(--dark-brown);color:rgba(255,253,247,0.7);
+  text-align:center;font-size:0.85rem;
+}
+footer a{color:rgba(255,253,247,0.9);text-decoration:none}
+footer a:hover{text-decoration:underline}
+.footer-powered{margin-top:0.5rem;font-size:0.78rem;opacity:0.6}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  .hero{padding:2rem 1.25rem;min-height:90vh}
+  .hero-stats{gap:1.5rem}
+  .categories,.why,.family{padding:3rem 1.25rem}
+  .cat-grid{grid-template-columns:1fr}
+}
+
+/* ANIMATIONS */
+.fade-up{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease}
+.fade-up.visible{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-emoji">📚</div>
+  <h1><span>Little</span>Library</h1>
+  <p class="hero-tagline">Take one. Leave one.</p>
+  <p class="hero-sub">Books, seeds, toys — free, near you. Find what your community shares, all across Australia.</p>
+  <a href="app.html" class="hero-cta">
+    Open the map
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-num">2,613</div>
+      <div class="hero-stat-label">locations mapped</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">4</div>
+      <div class="hero-stat-label">types to explore</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">100%</div>
+      <div class="hero-stat-label">free & open</div>
+    </div>
+  </div>
+</section>
+
+<section class="categories">
+  <div class="categories-inner">
+    <div class="section-head fade-up">
+      <h2>Everything your community shares</h2>
+      <p>Four kinds of places where neighbours give freely. One map to find them all.</p>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-card fade-up">
+        <span class="cat-emoji">📚</span>
+        <h3>Street Libraries</h3>
+        <p>The little wooden boxes on posts, fences and front yards. Take a book, leave a book. The original sharing economy — no app required, just generosity.</p>
+        <span class="cat-count">603 mapped</span>
+      </div>
+      <div class="cat-card fade-up">
+        <span class="cat-emoji">🏛️</span>
+        <h3>Public Libraries</h3>
+        <p>Your council library — free Wi-Fi, story time, quiet reading corners, and a community hub that belongs to everyone. With opening hours so you never turn up to a locked door.</p>
+        <span class="cat-count">1,573 mapped</span>
+      </div>
+      <div class="cat-card fade-up">
+        <span class="cat-emoji">🌱</span>
+        <h3>Seed Libraries & Community Gardens</h3>
+        <p>Borrow seeds, grow food, return seeds after harvest. Community gardens where neighbours grow together. The most generous cycle in nature.</p>
+        <span class="cat-count">414 mapped</span>
+      </div>
+      <div class="cat-card fade-up">
+        <span class="cat-emoji">🧸</span>
+        <h3>Toy Libraries</h3>
+        <p>Borrow toys instead of buying them. Your two-year-old doesn't need to own 47 plastic toys — they need access to them. Save hundreds of dollars a year and a mountain of landfill.</p>
+        <span class="cat-count">23 mapped</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="why">
+  <div class="why-inner">
+    <div class="section-head fade-up">
+      <h2>Why this map exists</h2>
+    </div>
+    <div class="why-grid">
+      <div class="why-item fade-up">
+        <div class="why-icon">📍</div>
+        <div>
+          <h3>They're hidden in plain sight</h3>
+          <p>Street libraries, toy libraries, seed swaps — they're everywhere, but unless you already know where they are, you walk straight past them. This map surfaces them all.</p>
+        </div>
+      </div>
+      <div class="why-item fade-up">
+        <div class="why-icon">🤝</div>
+        <div>
+          <h3>Community-powered accuracy</h3>
+          <p>Libraries get installed, moved and removed all the time. Report updates and the map gets more accurate every week — powered by the people who actually use these spaces.</p>
+        </div>
+      </div>
+      <div class="why-item fade-up">
+        <div class="why-icon">💰</div>
+        <div>
+          <h3>Save money, reduce waste</h3>
+          <p>A toy library membership can save a family hundreds a year. Seed libraries mean free food from your garden. Street libraries mean never buying another paperback you'll read once.</p>
+        </div>
+      </div>
+      <div class="why-item fade-up">
+        <div class="why-icon">🌏</div>
+        <div>
+          <h3>Open data, no tracking</h3>
+          <p>Built on OpenStreetMap community data. No ads, no tracking, no accounts. Just a map that helps you find what your community shares.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="family">
+  <div class="family-inner fade-up">
+    <h2>Part of the family</h2>
+    <p style="color:var(--text-light);margin-top:0.5rem;max-width:30rem;margin-left:auto;margin-right:auto">Find the park. Confirm the change table. Check the dog's welcome. Grab a toy from the library two streets away. One good thing at a time.</p>
+    <div class="family-apps">
+      <a href="https://holyshit.app" class="family-chip">🚽 HolyShit</a>
+      <a href="https://babyshit.app" class="family-chip">👶 BabyShit</a>
+      <a href="https://dogbowl.app" class="family-chip">🐕 DogBowl</a>
+      <a href="https://publicbbq.app" class="family-chip">🔥 PublicBBQ</a>
+      <a href="https://evzap.app" class="family-chip">⚡ EVZap</a>
+      <a href="https://helpnear.app" class="family-chip">🆘 HelpNear</a>
+      <span class="family-chip active">📚 LittleLibrary</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>LittleLibrary.app — Find what your community shares.</div>
+  <div class="footer-powered">Powered by <a href="https://upd8.group">UPD8 GROUP</a> &middot; Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
+</footer>
+
+<script>
+// Intersection Observer for fade-up animations
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }});
+}, { threshold: 0.15 });
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
